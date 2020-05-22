@@ -1,6 +1,6 @@
 const con = require('../util/database');
 
-let constFile = require('../newsConstants/constant');
+let constFile = require('../util/constants');
 
 //This is used to get all the news
 exports.getAllNews = (req,res,next) => {
@@ -35,12 +35,15 @@ exports.getNewsByCategory = (req,res,next) => {
  */
 exports.getSetOfNewsByCategory = (req,res,next) => {
     console.log(req.params);
+    let pageNum = parseInt(req.params.pageNum);
+    let itemPerPage = constFile.ITEMPERPAGE;
+    let offset = (pageNum -1) * itemPerPage;
     con.query(
         'SELECT * FROM rss_news.agency_news '+
 		'INNER JOIN rss_news.category '+
         'ON agency_news.category_id = category.category_id '+
         'WHERE category_title = ? ORDER BY agency_news_id ASC '+
-        'LIMIT ?, 1',[req.params.category,parseInt(req.params.limit)]
+        'LIMIT ? OFFSET ?',[req.params.category, itemPerPage ,offset]
         , function(error,results,fields){
         if (error) throw error;
         res.end(JSON.stringify(results));
