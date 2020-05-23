@@ -19,11 +19,22 @@ function addNewsToDb() {
         agencyFeed.forEach(item => {
 
             rssFeedsObjects(item.feed_url).then(function(feed){
-    
+
                 var rssFeedNews = feed.items;
-                
+
                 rssFeedNews.forEach(element => {
                     var pubDate = moment(rssFeedNews.pubDate).tz('Asia/Kolkata').format("YYYY-MM-DD HH:mm:ss");
+                    
+                    let pic_src = "";
+                    if(item.feed_url=="https://www.indiatoday.in/rss/1206584"){
+                        let src = element.content.split('src');
+                        let imgPath = src[1].split("=");
+                        let position = imgPath[1].indexOf(">");
+                        pic_src = imgPath[1].substring(1,position-1);
+                        
+                        console.log(element);
+                    }
+                
                     var postData = {
                         "title": element.title,
                         "description": element.description,
@@ -32,7 +43,8 @@ function addNewsToDb() {
                         "news_published_date": pubDate,
                         "agency_feed_id": item.agency_feed_id,
                         "agency_id": item.agency_id,
-                        "category_id": item.category_id
+                        "category_id": item.category_id,
+                        "pic_src": pic_src
                     }
                     
                     con.query('INSERT INTO rss_news.agency_news SET ?', postData, function (error, results, fields) {
