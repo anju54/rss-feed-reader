@@ -8,4 +8,6 @@ router.get('/all', newsController.getAllNews);
 
 router.get("/:category/:pageNum", newsController.getSetOfNewsByCategory);
 
+router.get("/top-news", newsController.getTopNews);
+
 module.exports = router;
