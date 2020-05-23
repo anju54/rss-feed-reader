@@ -4,19 +4,17 @@ let constFile = require('../util/constants');
 
 //This is used to get all the news
 exports.getAllNews = (req,res,next) => {
-
+  
     con.query(
         'SELECT * FROM rss_news.agency_news limit 5'  , function(error,results,fields){
         if (error) throw error;
         res.end(JSON.stringify(results));
     });
-
 }
 
 //This is used to get news by category
 exports.getNewsByCategory = (req,res,next) => {
-    console.log(req.params);
-
+   
     con.query(
         'SELECT * FROM rss_news.agency_news '+
 		'INNER JOIN rss_news.category '+
@@ -26,7 +24,6 @@ exports.getNewsByCategory = (req,res,next) => {
         if (error) throw error;
         res.end(JSON.stringify(results));
     });
-
 }
 
 /**
@@ -34,7 +31,7 @@ exports.getNewsByCategory = (req,res,next) => {
  *  @params limit is used for starting of the page
  */
 exports.getSetOfNewsByCategory = (req,res,next) => {
-    
+
     let pageNum = parseInt(req.params.pageNum);
     let itemPerPage = constFile.ITEMPERPAGE;
     let offset = (pageNum -1) * itemPerPage;
@@ -51,23 +48,35 @@ exports.getSetOfNewsByCategory = (req,res,next) => {
     });
 }
 
-/**
- * This is used to fetch top news from db
- */
 exports.getTopNews = (req,res,next) => {
-    
-    //let pageNum = parseInt(req.params.pageNum);
-    //let offset = (pageNum -1) * itemPerPage;
+
+    getTopNewsPromise().then(
+        function(results){
+            res.end(JSON.stringify(results));
+        })
+        .catch(error => {
+            console.log(error);
+            res.end("failed");
+    }); 
+}
+
+// This is used to fetch top news from db using promise 
+function getTopNewsPromise() {
+
     let itemPerPage = constFile.ITEMFORTOPNEWS;
-    con.query(
-        'SELECT * FROM rss_news.agency_news '+
-		'INNER JOIN rss_news.category '+
-        'ON agency_news.category_id = category.category_id '+
-        'WHERE category_title = "top stories" ORDER BY agency_news_id ASC '+
-        'LIMIT ? ',[itemPerPage]
-        , function(error,results,fields){
-        if (error) throw error;
-        res.end(JSON.stringify(results));
-    });
-    
+
+    return new Promise (
+        function(resolve,reject){
+            con.query(
+                'SELECT * FROM rss_news.agency_news '+
+                'INNER JOIN rss_news.category '+
+                'ON agency_news.category_id = category.category_id '+
+                'WHERE category_title = "top stories" ORDER BY agency_news_id DESC '+
+                'LIMIT ? ',[itemPerPage],
+                function(error,results,fields){
+                    if (error) reject(err); 
+                    resolve(results)
+            })
+        }
+    )
 }
