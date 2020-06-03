@@ -54,6 +54,7 @@ exports.getSetOfNewsByCategory = (req,res,next) => {
         , function(error,results,fields){
         if (error) throw error;
         console.log(results);
+        results["categ"] = req.params.category;
         res.end(JSON.stringify(results));
     });
 }
@@ -111,7 +112,6 @@ function getTopNewsPromise() {
     )
 }
 
-
 // This is used to fetch news by rss providers
 function getNewsByRSSProvider(pageNum,rss){
     console.log(rss);
@@ -133,6 +133,91 @@ function getNewsByRSSProvider(pageNum,rss){
                     resolve(results);
                 }
             )
+        }
+    )
+}
+
+exports.invokeGetCountOfRecords = (req,res,next) => {
+    
+    getCountOfRSSRecords(req.params.rss).then(
+        function(results){
+            res.end(JSON.stringify(results));
+        })
+        .catch(error => {
+            console.log(error);
+            res.end("failed");
+    }); 
+}
+
+function getCountOfRSSRecords(rss){
+    return new Promise(
+        function (resolve,reject){
+            con.query(
+                'SELECT count(*) as numOfRecords FROM rss_news.agency_news an ' +
+                'INNER JOIN rss_news.agency a ' +
+                'ON an.agency_id = a.agency_id ' +
+                'WHERE agency_title = ? ' +
+                'ORDER BY agency_news_id DESC ',[rss],
+                function(err,results,fields){
+                    if(err) reject(err);
+                    console.log(results);
+                    resolve(results);
+                }
+            )
+        }
+    )
+}
+
+exports.invokeCountOfCategoryRecords = (req,res,next) => {
+    getCountOfCategoryRecords(req.params.category).then(
+        function(results){
+            res.end(JSON.stringify(results));
+        })
+        .catch(error => {
+            console.log(error);
+            res.end("failed");
+    }); 
+}
+
+function getCountOfCategoryRecords(category){
+    
+    return new Promise(
+        function (resolve,reject){
+            con.query(
+                'SELECT COUNT(*) AS numOfRecords FROM rss_news.agency_news '+
+                'INNER JOIN rss_news.category '+
+                'ON agency_news.category_id = category.category_id '+
+                'WHERE category_title = ? ORDER BY agency_news_id DESC ',[category]
+                , function(err,results,fields){
+                    if(err) reject(err);
+                    //console.log(err);
+                    resolve(results);
+            });
+        }
+    )
+}
+
+exports.invokeGetCountOfAllRecords = (req,res,next) => {
+    getCountOfAllNews().then(
+        function(results){
+            res.end(JSON.stringify(results));
+        })
+        .catch(error => {
+            console.log(error);
+            res.end("failed");
+    }); 
+}
+
+
+function getCountOfAllNews(){
+    return new Promise(
+        function (resolve,reject){
+            con.query('SELECT count(*) as totalpage ' +
+            'FROM rss_news.agency_news an inner join rss_news.agency a on an.agency_id = a.agency_id ' +
+            'ORDER BY agency_news_id DESC ', function(err,results,fields){
+                if(err) reject(err);
+                resolve(results);
+            })
         }
     )
 }

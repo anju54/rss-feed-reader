@@ -1,4 +1,4 @@
-let itemPerPage = 6;
+let itemPerPage = 3;
 let itemForTopNews = 3;
 
 module.exports = {
