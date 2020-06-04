@@ -26,7 +26,7 @@ function addNewsToDb() {
                     var pubDate = moment(rssFeedNews.pubDate).tz('Asia/Kolkata').format("YYYY-MM-DD HH:mm:ss");
                     
                     let pic_src = "";
-                    if(item.feed_url=="https://www.indiatoday.in/rss/1206584"){
+                    if(item.feed_url=="https://www.indiatoday.in/rss/1206584" || item.feed_url=="https://www.indiatoday.in/rss/1206614"){
                         let src = element.content.split('src');
                         let imgPath = src[1].split("=");
                         let position = imgPath[1].indexOf(">");
