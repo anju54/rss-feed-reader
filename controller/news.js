@@ -2,37 +2,44 @@ const con = require('../util/database');
 
 let constFile = require('../util/constants');
 
-//This is used to get all the news
+//This is used to get all the news and total news count
 exports.getAllNews = (req,res,next) => {
 
     let pageNum = parseInt(req.params.pageNum);
     let itemPerPage = constFile.ITEMFORTOPNEWS;
     let offset = (pageNum -1) * itemPerPage;
-  
-    con.query(
-        'SELECT an.title,a.agency_title,an.link  '+
-        'FROM rss_news.agency_news an inner join rss_news.agency a on an.agency_id = a.agency_id '+
-        'ORDER BY agency_news_id DESC '+
-        'LIMIT ? OFFSET ?',[itemPerPage ,offset]
-         , function(error,results,fields){
-        if (error) throw error;
-        console.log(results);
-        res.end(JSON.stringify(results));
-    });
+    let allnews = [];
+    getAllNewsPromise(itemPerPage,offset).then(
+        function(results){ allnews.push(results); }
+    )
+    
+    getCountOfAllNews().then(
+        function(results){
+            response = {
+                "allnews" : allnews,
+                "total_all_news_count" : results
+            }
+            res.end(JSON.stringify(response));
+        }
+    )
+    
 }
 
-//This is used to get news by category
-exports.getNewsByCategory = (req,res,next) => {
-   
-    con.query(
-        'SELECT * FROM rss_news.agency_news '+
-		'INNER JOIN rss_news.category '+
-        'ON agency_news.category_id = category.category_id '+
-        'WHERE category_title = ? ', [req.params.category] 
-        , function(error,results,fields){
-        if (error) throw error;
-        res.end(JSON.stringify(results));
-    });
+// This is used to give the promise object for all news
+function getAllNewsPromise(itemPerPage,offset){
+    return new Promise(
+        function (resolve,reject){
+            con.query(
+                'SELECT an.title,a.agency_title,an.link  '+
+                'FROM rss_news.agency_news an inner join rss_news.agency a on an.agency_id = a.agency_id '+
+                'ORDER BY agency_news_id DESC '+
+                'LIMIT ? OFFSET ?',[itemPerPage ,offset]
+                 , function(error,results,fields){
+                if (error) throw error;
+                resolve(results);
+            })
+        }
+    )
 }
 
 /**
@@ -40,11 +47,11 @@ exports.getNewsByCategory = (req,res,next) => {
  *  @params limit is used for starting of the page
  */
 exports.getSetOfNewsByCategory = (req,res,next) => {
-    console.log("13.......");
-
+console.log("cat log");
     let pageNum = parseInt(req.params.pageNum);
     let itemPerPage = constFile.ITEMPERPAGE;
     let offset = (pageNum -1) * itemPerPage;
+    let categoryNews = [];
     con.query(
         'SELECT * FROM rss_news.agency_news '+
 		'INNER JOIN rss_news.category '+
@@ -53,14 +60,25 @@ exports.getSetOfNewsByCategory = (req,res,next) => {
         'LIMIT ? OFFSET ?',[req.params.category, itemPerPage ,offset]
         , function(error,results,fields){
         if (error) throw error;
-        console.log(results);
         results["categ"] = req.params.category;
-        res.end(JSON.stringify(results));
+        categoryNews.push(results);
     });
+
+    getCountOfCategoryRecords(req.params.category).then(
+        function(results){
+            let response = {
+                "cat_news" : categoryNews,
+                "cat_news_count" : results
+            }
+            res.end(JSON.stringify(response));
+        })
+        .catch(error => {
+            console.log(error);
+            res.end("failed");
+    }); 
 }
 
 exports.getTopNews = (req,res,next) => {
-    console.log("12.......");
 
     getTopNewsPromise().then(
         function(results){
@@ -73,22 +91,32 @@ exports.getTopNews = (req,res,next) => {
 }
 
 exports.invokeGetNewsByRSSProvider = (req,res,next) => {
-
-    console.log("11.......");
-    console.log(req.params.rss);
-
+    console.log("rss log");
     let pageNum = parseInt(req.params.pageNum);
     let rss = req.params.rss;
+    let rssNews = [];
 
-    getNewsByRSSProvider(pageNum,rss).then(
+    getNewsByRSSProvider(pageNum,rss)
+    .then(
         function(results){
-            res.end(JSON.stringify(results));
+            rssNews.push(results)}
+    ).catch(error => {
+        console.log(error);
+        res.end("failed");
+    }); 
+
+    getCountOfRSSRecords(req.params.rss).then(
+        function(results){
+            let response = {
+                "rss_news" : rssNews,
+                "rss_news_count" : results
+            }
+            res.end(JSON.stringify(response));;
         })
         .catch(error => {
             console.log(error);
             res.end("failed");
     }); 
-
 }
 
 // This is used to fetch top news from db using promise 
@@ -110,6 +138,7 @@ function getTopNewsPromise() {
             })
         }
     )
+    
 }
 
 // This is used to fetch news by rss providers
@@ -137,18 +166,6 @@ function getNewsByRSSProvider(pageNum,rss){
     )
 }
 
-exports.invokeGetCountOfRecords = (req,res,next) => {
-    
-    getCountOfRSSRecords(req.params.rss).then(
-        function(results){
-            res.end(JSON.stringify(results));
-        })
-        .catch(error => {
-            console.log(error);
-            res.end("failed");
-    }); 
-}
-
 function getCountOfRSSRecords(rss){
     return new Promise(
         function (resolve,reject){
@@ -166,17 +183,6 @@ function getCountOfRSSRecords(rss){
             )
         }
     )
-}
-
-exports.invokeCountOfCategoryRecords = (req,res,next) => {
-    getCountOfCategoryRecords(req.params.category).then(
-        function(results){
-            res.end(JSON.stringify(results));
-        })
-        .catch(error => {
-            console.log(error);
-            res.end("failed");
-    }); 
 }
 
 function getCountOfCategoryRecords(category){
@@ -197,17 +203,39 @@ function getCountOfCategoryRecords(category){
     )
 }
 
-exports.invokeGetCountOfAllRecords = (req,res,next) => {
-    getCountOfAllNews().then(
-        function(results){
-            res.end(JSON.stringify(results));
-        })
-        .catch(error => {
-            console.log(error);
-            res.end("failed");
-    }); 
-}
+// exports.invokeGetCountOfAllRecords = (req,res,next) => {
+//     getCountOfAllNews().then(
+//         function(results){
+//             res.end(JSON.stringify(results));
+//         })
+//         .catch(error => {
+//             console.log(error);
+//             res.end("failed");
+//     }); 
+// }
 
+// exports.invokeCountOfCategoryRecords = (req,res,next) => {
+//     getCountOfCategoryRecords(req.params.category).then(
+//         function(results){
+//             res.end(JSON.stringify(results));
+//         })
+//         .catch(error => {
+//             console.log(error);
+//             res.end("failed");
+//     }); 
+// }
+
+// exports.invokeGetCountOfRecords = (req,res,next) => {
+    
+//     getCountOfRSSRecords(req.params.rss).then(
+//         function(results){
+//             res.end(JSON.stringify(results));
+//         })
+//         .catch(error => {
+//             console.log(error);
+//             res.end("failed");
+//     }); 
+// }
 
 function getCountOfAllNews(){
     return new Promise(
@@ -221,3 +249,17 @@ function getCountOfAllNews(){
         }
     )
 }
+
+//This is used to get news by category
+// exports.getNewsByCategory = (req,res,next) => {
+   
+//     con.query(
+//         'SELECT * FROM rss_news.agency_news '+
+// 		'INNER JOIN rss_news.category '+
+//         'ON agency_news.category_id = category.category_id '+
+//         'WHERE category_title = ? ', [req.params.category] 
+//         , function(error,results,fields){
+//         if (error) throw error;
+//         res.end(JSON.stringify(results));
+//     });
+// }
