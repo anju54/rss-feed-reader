@@ -12,11 +12,4 @@ router.get("/top-news", newsController.getTopNews);
 
 router.get("/rss/:rss/:pageNum",newsController.invokeGetNewsByRSSProvider);
 
-//router.get("/total-page/rss/:rss",newsController.invokeGetCountOfRecords);
-
-//router.get("/total-page/category/:category",newsController.invokeCountOfCategoryRecords);
-
-//router.get("/page-count",newsController.invokeGetCountOfAllRecords);
-
-
 module.exports = router;
