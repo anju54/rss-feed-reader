@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const role=require('../util/role');
 var config = require('../util/config');
 
+// This used to set admin role to specific url
 const adminRole = (req, res, next)=>{
 
     try {

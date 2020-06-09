@@ -78,6 +78,7 @@ console.log("cat log");
     }); 
 }
 
+// This is used to get the promise object of top news
 exports.getTopNews = (req,res,next) => {
 
     getTopNewsPromise().then(
@@ -90,6 +91,7 @@ exports.getTopNews = (req,res,next) => {
     }); 
 }
 
+// This is used to get the promise object of news by rss provider and total count
 exports.invokeGetNewsByRSSProvider = (req,res,next) => {
     console.log("rss log");
     let pageNum = parseInt(req.params.pageNum);
@@ -166,6 +168,7 @@ function getNewsByRSSProvider(pageNum,rss){
     )
 }
 
+// This is used to get totalcount of specific rss provider( e.g india today ) news
 function getCountOfRSSRecords(rss){
     return new Promise(
         function (resolve,reject){
@@ -185,6 +188,7 @@ function getCountOfRSSRecords(rss){
     )
 }
 
+// This is used to get totalcount of specific category{ e.g sports } news
 function getCountOfCategoryRecords(category){
     
     return new Promise(
@@ -203,6 +207,7 @@ function getCountOfCategoryRecords(category){
     )
 }
 
+// This is used to get totalcount of all news 
 function getCountOfAllNews(){
     return new Promise(
         function (resolve,reject){

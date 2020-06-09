@@ -1,6 +1,7 @@
 var jwt = require('jsonwebtoken');
 var config = require('../util/config');
 
+// This is used to validate the jwt token
 function verifyToken(req, res, next) {
 
   var token = req.headers['x-access-token'];
